@@ -176,7 +176,7 @@ public class TestRouter9 extends ActiveRouter
     
 
     private String showInfoHost(DTNHost h) {
-String info = h.toString() + ": " + this.contactMetadata.get(h) + " " + this.contactMetadata.get(h);
+String info = h.toString() + ": " + this.storageMetrics.get(h) + " " + this.contactMetadata.get(h);
 return info;
     }
 
