@@ -21,7 +21,7 @@ Group2.nrofHosts = 22
 MapBasedMovement.nrofMapFiles = 1
 MapBasedMovement.mapFile1 = data/freiburgSimplificado/1_nodes.wkt
 
-Group.router = EpidemicRouter
+Group.router = TestRouter9
 Events1.size = 1M
 btInterface.transmitSpeed = 1M
 
