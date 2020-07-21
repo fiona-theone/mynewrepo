@@ -24,9 +24,9 @@ public class ContactMD extends Metadata
     }
 
     @Override
-    public void connDown(DTNHost h, double time) {
-        
-        
+    public void connDown(DTNHost thisHost, DTNHost otherHost, double time) {
+        ContactDuration cd = new ContactDuration(thisHost, otherHost, get_last_start(), time);
+        contactMetadata.put(otherHost.toString(),new Tuple<String, Double>(cd.getName(),cd.getValue()));
     }
     
     public double get_last_start() {

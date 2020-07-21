@@ -37,7 +37,7 @@ public class StorageMD extends Metadata
    
 
     @Override
-    public void connDown(DTNHost h, double time) {
+    public void connDown(DTNHost thisHost, DTNHost otherHost, double time) {
         
         
     }

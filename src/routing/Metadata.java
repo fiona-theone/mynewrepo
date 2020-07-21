@@ -14,5 +14,5 @@ public abstract class Metadata
   
   public abstract void connUp(DTNHost h, double time);
   
-  public abstract void connDown(DTNHost h, double time);
+  public abstract void connDown(DTNHost thisHost, DTNHost otherHost, double time);
 }

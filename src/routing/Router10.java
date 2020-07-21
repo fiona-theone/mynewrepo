@@ -35,7 +35,7 @@ public class Router10 extends ActiveRouter
         if (con.isUp()) {
             metadataInfo.connUp(otherHost, SimClock.getTime());   
         }else {
-            metadataInfo.connUp(otherHost, SimClock.getTime()); 
+            metadataInfo.connDown(getHost(), otherHost, SimClock.getTime()); 
         }
     }
 

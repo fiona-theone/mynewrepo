@@ -31,9 +31,9 @@ public class MetadataInfo
         }
     }
 
-    public void connDown(DTNHost h, double time) {
+    public void connDown(DTNHost thisHost, DTNHost otherHost, double time) {
         for (Metadata m: this.metadata_instances) {
-            m.connDown(h, time);
+            m.connDown(thisHost, otherHost, time);
         }
     }
     
