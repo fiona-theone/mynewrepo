@@ -1,39 +1,42 @@
 package test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.Assert.*;
+
+//import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+//import org.junit.jupiter.api.AfterEach;
+//import org.junit.jupiter.api.BeforeEach;
+//import org.junit.jupiter.api.Test;
 
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 import core.CBRConnection;
 import core.Coord;
 import core.DTNHost;
 import core.Message;
 import core.MessageListener;
 import core.ModuleCommunicationBus;
-import core.MovementListener;
 import core.NetworkInterface;
-import core.Settings;
 import core.SimClock;
-import movement.MovementModel;
-import movement.Path;
-import routing.MessageRouter;
+import routing.ContactHistory;
 import routing.PassiveRouter;
-import routing.util.Metadata;
-import routing.util.MetadataInfo;
+import routing.Router10;
+import routing.StorageMetrics;
+import routing.MetadataInfo;
 
-class MetadataInfoTest {
+ public class MetadataInfoTest{
 
 	// --> copied from ConnectionTest
 	private MessageChecker mc;
 	private TestUtils utils;
 	protected static final int TRANSMIT_SPEED = 10;
 	public static final double START_TIME = 10.0;
-	private TestDTNHost h[];
+	private DTNHost h[];
 	private CBRConnection c[];
 	private Message m[];
 	private int speed[] = {50, 50, 100, 200, 100};
@@ -42,6 +45,7 @@ class MetadataInfoTest {
 	private int index;
 	private SimClock clock = SimClock.getInstance();
 	private int conCount;
+	
 	// <-- copied from ConnectionTest
 
 
@@ -50,16 +54,20 @@ class MetadataInfoTest {
 	}
 
 	// --> copied from ConnectionTest
-	@BeforeEach
-	void setUp() throws Exception {
+	@Before
+	public void setUp() throws Exception {
 		SimClock.reset();
 		clock.setTime(START_TIME);
 		TestSettings testSettings = new TestSettings();
 		testSettings.setNameSpace(TestUtils.IFACE_NS);
 		testSettings.putSetting(NetworkInterface.TRANSMIT_RANGE_S, "1.0");
 		testSettings.putSetting(NetworkInterface.TRANSMIT_SPEED_S, "1");
+		
+		List<MessageListener> ml = new ArrayList<MessageListener>();
+        ml.add(mc);
+        this.utils = new TestUtils(null,ml,testSettings);
 
-		h = new TestDTNHost[nrof];
+		h = new DTNHost[nrof];
 		c = new CBRConnection[nrof];
 		m = new Message[nrof];
 
@@ -69,7 +77,7 @@ class MetadataInfoTest {
 			li.add(ni);
 
 			ModuleCommunicationBus comBus = new ModuleCommunicationBus();
-			h[i] = new TestDTNHost(li,comBus, testSettings);
+			h[i] = new DTNHost(ml,null,"h",li,comBus, new StationaryMovement(new Coord(0,0)), new PassiveRouter(testSettings));
 			m[i] = new Message(h[0], h[i],""+i, size[i]);
 		}
 
@@ -79,9 +87,9 @@ class MetadataInfoTest {
 		con(h[2], h[4]);
 		con(h[3], h[4]);
 
-		c[0].startTransfer(h[0], m[0]);
-		c[1].startTransfer(h[0], m[1]);
-		c[2].startTransfer(h[1], m[2]);
+		//c[0].startTransfer(h[0], m[0]);
+		//c[1].startTransfer(h[0], m[1]);
+		//c[2].startTransfer(h[1], m[2]);
 		conCount = 3;
 	}
 
@@ -92,15 +100,15 @@ class MetadataInfoTest {
 	// <-- copied from ConnectionTest
 
 	
-	@AfterEach
-	void tearDown() throws Exception {
+	@After
+	public void tearDown() throws Exception {
 	}
 
 	
 	@Test
-	void testCreation() {
-		MetadataInfo md = new MetadataInfo(h[0]);
-		assertTrue(h[0].getAddress() == md.get_id());
+	public void testCreation() {
+		MetadataInfo md = new MetadataInfo(h[1]);  //should it be h[1]? Yes
+		assertTrue(h[1].toString() == md.get_id());
 	}
 	
 	/*
@@ -108,13 +116,20 @@ class MetadataInfoTest {
 	 *  - when the connection comes up, the start time is properly set
 	 *  -
 	 */
-	@Test
-	void testConnUp() {
-		MetadataInfo md = new MetadataInfo(h[0]);
-		assertEquals(md.contact.get_last_start(), 0.0);
+	
+    @Test
+	public void testConnUp() {
+		MetadataInfo md = new MetadataInfo(h[1]);
+		assertEquals(md.getContact().get_last_start(), 0.0, 0.001);
+		Router10 thisRouter =(Router10)h[0].getRouter();
+		assertEquals(thisRouter.getContactMetrics().size(), 0);
+		assertEquals(thisRouter.getStorageMetadata().size(), 0);
 		// c[0] is a connection between h[0] and h[1], connection up should set the starting time to 10.0;
-		md.connUp(c[0], SimClock.getTime());
-		assertEquals(md.contact.get_last_start(), 10.0);
+		md.connUp(c[0], h[0], SimClock.getTime());
+		//assertEquals(md.getContact().get_last_start(), 10.0); // 
+		assertEquals(md.getContact().get_last_start(), 10.0, 0.001);
+		assertEquals(thisRouter.getContactMetrics().size(), 1);
+		assertEquals(thisRouter.getStorageMetadata().size(), 1);
 	}
 
 	/*
@@ -124,7 +139,14 @@ class MetadataInfoTest {
 	 * - The contact size has is properly calculated
 	 */
 	@Test
-	void testConnDown() {}
+	public void testConnDown() {
+	    MetadataInfo md = new MetadataInfo(h[1]);   
+	    Router10 thisRouter = (Router10)h[0].getRouter();
+	    assertEquals(thisRouter.getContactMetadata().size(), 0);
+	    md.connDown(c[0], h[0], SimClock.getTime());
+	    assertEquals(thisRouter.getContactMetadata().size(), 1);
+	   
+	}
 	
 	/*
 	 * Verify:
@@ -132,7 +154,14 @@ class MetadataInfoTest {
 	 *  
 	 */
 	@Test
-	void testBufferSize() {}
+	public void testBufferSize() {
+	    MetadataInfo md = new MetadataInfo(h[1]);  
+	    Router10 thisRouter = (Router10)h[0].getRouter();
+	    Map<String, StorageMetrics> storageMetadata = thisRouter.getStorageMetadata();
+	    md.connUp(c[0], h[0], SimClock.getTime());
+	    StorageMetrics sm = storageMetadata.get(storageMetadata.keySet().toArray()[0]);
+	    assertEquals(sm.getBufferSize(), h[1].getRouter().getBufferSize());
+	}
 	
 	/*
 	 * Verify:
@@ -140,7 +169,21 @@ class MetadataInfoTest {
 	 *  - When A meets B, and B meets C, C should learn the buffer size of A
 	 */
 	@Test
-	void testBufferSizeTransitive() {}
+	public void testBufferSizeTransitive() {
+	    MetadataInfo md = new MetadataInfo(h[2]); 
+	    Router10 thisRouter = (Router10)h[1].getRouter();
+	    Router10 otherRouter = (Router10)h[2].getRouter();
+	    Map<String, StorageMetrics> storageMetadata1 = thisRouter.getStorageMetadata();
+	    Map<String, StorageMetrics> storageMetadata2 = otherRouter.getStorageMetadata();
+	    assertEquals(storageMetadata1.size(), 1);
+	    assertEquals(storageMetadata2.size(), 0);
+	    md.connUp(c[1], h[2], SimClock.getTime());
+	    StorageMetrics sm1 = storageMetadata1.get(storageMetadata1.keySet().toArray()[0]);
+	    StorageMetrics sm2 = storageMetadata2.get(storageMetadata2.keySet().toArray()[0]);
+	    assertEquals(storageMetadata1.size(), 2);
+	    assertEquals(storageMetadata2, 1);
+	    assertEquals(sm1.getBufferSize(), sm2.getBufferSize());
+	}
 	
 	/*
 	 * Verify:
@@ -152,25 +195,46 @@ class MetadataInfoTest {
 	 * 
 	 */	
 	@Test
-	void testContactTransitive() {}
+	public void testContactTransitive() {
+	    
+	    MetadataInfo md = new MetadataInfo(h[2]); 
+        Router10 thisRouter = (Router10)h[1].getRouter();
+        Router10 otherRouter = (Router10)h[2].getRouter();
+        Map<String, ContactHistory> contactMetadata1 = thisRouter.getContactMetadata();
+        Map<String, ContactHistory> contactMetadata2 = otherRouter.getContactMetadata();
+        assertEquals(contactMetadata1.size(), 1);
+        assertEquals(contactMetadata2.size(), 0);
+        md.connUp(c[1], h[2], SimClock.getTime());
+        String contactDescription1 = contactMetadata1.keySet().stream().findFirst().get();
+        String contactDescription2 = contactMetadata2.keySet().stream().findFirst().get();
+        assertEquals(contactMetadata1.size(), 2);
+        assertEquals(contactMetadata2, 1);
+        assertEquals(contactDescription1, contactDescription2);
+	}
 	
 	/*
 	 * Test the size of the metadata, as it grows
 	 */
 	@Test
-	void testExchangeMetadataBundle() {}
+	public void testExchangeMetadataBundle() {
+	   
+	}
 	
 	/*
 	 * Test the exchange of metadata before data
 	 */
 	@Test
-	void testMetadataExchange() {}
+	public void testMetadataExchange() {
+	    
+	}
 	
 	/*
 	 * Test that the calculated size from data and metadata is properly set
 	 */
 	@Test
-	void testMetadataAndDataExchange() {}
+	public void testMetadataAndDataExchange() {
+	    
+	}
 	
 	
 }

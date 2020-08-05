@@ -6,9 +6,10 @@ import core.Connection;
 import core.DTNHost;
 
 public class MetadataInfo
-{
+{   
+    
     private String dev_id;
-    public ContactMD contact;
+    private ContactMD contact;
     private StorageMD storage;
     private List<Metadata> metadata_instances;
     
@@ -25,19 +26,27 @@ public class MetadataInfo
         this.metadata_instances.add(md);
     }
     
-    public void connUp(DTNHost h, double time) {
+    public void connUp(Connection con, DTNHost thisHost, double time) {
         for (Metadata m: this.metadata_instances) {
-                m.connUp(h, time);
+                m.connUp(con, thisHost,time);
         }
     }
 
-    public void connDown(DTNHost thisHost, DTNHost otherHost, double time) {
+    public void connDown(Connection con, DTNHost thisHost, double time) {
         for (Metadata m: this.metadata_instances) {
-            m.connDown(thisHost, otherHost, time);
+            m.connDown(con, thisHost, time);
         }
     }
     
     public String get_id() {
         return this.dev_id;
+    }
+    
+    public ContactMD getContact() {
+        return this.contact;
+    }
+    
+    public StorageMD getStorage() {
+        return this.storage;
     }
 }
