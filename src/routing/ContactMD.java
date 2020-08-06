@@ -65,6 +65,7 @@ public class ContactMD extends Metadata
         MessageRouter thisRouter = thisHost.getRouter();
         List<ContactMetrics> myContacts = ((Router10)thisRouter).getContactMetrics();
         Map<String, ContactHistory> myContactMetadata = ((Router10)thisRouter).getContactMetadata();
+        int totalNoOfEncounters = myContacts.size();
         int counter = 0;
         double sum = 0.0;
         double averageContactDuration = 0.0;
@@ -75,14 +76,15 @@ public class ContactMD extends Metadata
                 counter++;
                 sum += contactMetrics.getContactDuration();
             }
+        }
             if(counter != 0)
             {
                 averageContactDuration = sum / counter;
             }
+            
             ContactHistory contactHistory = new ContactHistory(averageContactDuration, lastEncTime, counter);
-            myContactMetadata.put(thisHost.toString() + " had a contact with" + otherHost.toString() + ". ", contactHistory);
-        }
-
+            myContactMetadata.put(thisHost.toString() + " had contact with" + otherHost.toString() + ". ", contactHistory);
+ 
     }
 
     public void updateTransitiveContactMetrics(DTNHost otherHost, DTNHost thisHost, double time) {
@@ -99,14 +101,15 @@ public class ContactMD extends Metadata
             if (contactDescription.contains(thisHost.toString())) {
                 continue; // don't add yourself
             }
-            ContactHistory contactDetails2 = myContactMetadata.get(contactDescription); 
-            if(contactDetails2 != null) {
-                if(contactDetails1.getLastEncTime()>contactDetails2.getLastEncTime()) {
-                    myContactMetadata.put(contactDescription, contactDetails1);
-                }
-            }else {
-                myContactMetadata.put(contactDescription, contactDetails1); 
-            }
+//            ContactHistory contactDetails2 = myContactMetadata.get(contactDescription); 
+//            if(contactDetails2 != null) {
+//                if(contactDetails1.getLastEncTime()>contactDetails2.getLastEncTime()) {
+//                    myContactMetadata.put(contactDescription, contactDetails1);
+//                }
+//            }else {
+//                myContactMetadata.put(contactDescription, contactDetails1); // there is no most recent info here, you want all the contact history apart yourself
+//            }
+            myContactMetadata.put(contactDescription, contactDetails1); 
         }   
         
     }

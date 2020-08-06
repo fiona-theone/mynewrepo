@@ -6,6 +6,7 @@ public class ContactHistory
     private double averageContactDuration;
     private double lastEncTime;
     private int noOfSocialContacts;
+    private double lastUpdatedContactFrequnecy;
     
     public ContactHistory(double averageContactDuration, double lastEncTime, int noOfSocialContacts)
     {
@@ -13,6 +14,7 @@ public class ContactHistory
         this.averageContactDuration = averageContactDuration;
         this.lastEncTime = lastEncTime;
         this.noOfSocialContacts = noOfSocialContacts;
+        //this.lastUpdatedContactFrequnecy = lastUpdatedContactFrequnecy;
     }
 
     public double getAverageContactDuration()
@@ -44,12 +46,28 @@ public class ContactHistory
     {
         this.noOfSocialContacts = noOfSocialContacts;
     }
+    
+    
+
+    public double getLastUpdatedContactFrequnecy()
+    {
+        return lastUpdatedContactFrequnecy;
+    }
+
+    public void setLastUpdatedContactFrequnecy(double lastUpdatedContactFrequnecy)
+    {
+        this.lastUpdatedContactFrequnecy = lastUpdatedContactFrequnecy;
+    }
 
     @Override
     public String toString()
     {
         return "ContactHistory [averageContactDuration=" + averageContactDuration + ", lastEncTime=" + lastEncTime + ", noOfSocialContacts=" + noOfSocialContacts + "]";
     }
+
+    
+
+    
     
     
 
