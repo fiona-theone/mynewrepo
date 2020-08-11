@@ -1,5 +1,8 @@
 package routing;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 import core.DTNHost;
 import core.Connection;
@@ -24,32 +27,36 @@ public class StorageMD extends Metadata
         updateTransitiveStorageMetrics(otherHost, thisHost, time);  
     }
     
+    /* Update storage metadata for host we just met.
+       First check if I have this host already in my map and the last encounter time 
+    */
     public void updateStorageMetricsFor(DTNHost thisHost, DTNHost otherHost, double time) {
         MessageRouter thisRouter = thisHost.getRouter();
         Map<String, StorageMetrics> myStorageMetadata =
                 ((Router10)thisRouter).getStorageMetadata(); 
-        Map<String, StorageMetrics> myStorageMetadataCopy = new HashMap<String, StorageMetrics>(); // avoid ConcurrentModificationException
-        if(myStorageMetadata.size() != 0) {
-        for (Map.Entry<String, StorageMetrics> entry : myStorageMetadata.entrySet()) {
-            if (entry.getKey()== otherHost.toString()){
-                if(entry.getValue().getLastEncTime()<time) {
+          if(myStorageMetadata.size() != 0) {
+            if(myStorageMetadata.containsKey(otherHost.toString())) {
+                if(myStorageMetadata.get(otherHost.toString()).getLastEncTime() < time) {
                     StorageMetrics sm = new StorageMetrics(otherHost, time);
-                    myStorageMetadataCopy.put("StorageMetadata for " + otherHost.toString() + ": ", sm);
+                    myStorageMetadata.put(otherHost.toString(), sm); 
+                   // updateMetadataSize();
                 }
-                
             }else {
                 StorageMetrics sm = new StorageMetrics(otherHost, time);
-                myStorageMetadataCopy.put("StorageMetadata for " + otherHost.toString() + ": ", sm); 
+                myStorageMetadata.put(otherHost.toString(), sm); 
+                //updateMetadataSize();
             }
         }
-        }
-        for (Map.Entry<String, StorageMetrics> entry : myStorageMetadataCopy.entrySet()) {
-            myStorageMetadata.put(entry.getKey(), entry.getValue());
-        }
         StorageMetrics sm = new StorageMetrics(otherHost, time);
-        myStorageMetadata.put("StorageMetadata for " + otherHost.toString() + ": ", sm); 
+        myStorageMetadata.put(otherHost.toString(), sm); 
+        //updateMetadataSize();
 
     }
+    
+    /* Update transitive storage metadata
+       For each storage metadata other host has check if I already have this info 
+       and if I have it check last encounter time 
+    */
     
     public void updateTransitiveStorageMetrics( DTNHost otherHost, DTNHost thisHost, double time ) {
         MessageRouter thisRouter = thisHost.getRouter();
@@ -66,15 +73,40 @@ public class StorageMD extends Metadata
             if(storageMetrics != null) {
                 if(storageMetrics.getLastEncTime() < entry.getValue().getLastEncTime()) {
                     myStorageMetadata.put(entry.getKey(), entry.getValue());
+                    //updateMetadataSize();
                 }
             }else {
                 myStorageMetadata.put(entry.getKey(), entry.getValue()); 
+                //updateMetadataSize();
             }
             
         }
     }
     
-   
+    /* Write to file every time an update happens
+ */
+    
+   public void updateMetadataSize(String data, int noOfLines) {
+       FileWriter fr = null;
+       BufferedWriter br = null;
+       String dataWithNewLine=data+System.getProperty("line.separator");
+       try{
+           fr = new FileWriter(Router10.file);
+           br = new BufferedWriter(fr);
+           for(int i = noOfLines; i>0; i--){
+               br.write(dataWithNewLine);
+           }
+       } catch (IOException e) {
+           e.printStackTrace();
+       }finally{
+           try {
+               br.close();
+               fr.close();
+           } catch (IOException e) {
+               e.printStackTrace();
+           }
+       }
+   }
 
     @Override
     public void connDown(Connection con, DTNHost otherHost, double time) {

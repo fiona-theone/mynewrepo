@@ -1,5 +1,6 @@
 package routing;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,6 +18,10 @@ public class Router10 extends ActiveRouter
     private List<ContactMetrics> cm;
     private Map<String, StorageMetrics> storageMetadata;
     private Map<String, ContactHistory> contactMetadata;
+    public static File file;
+    static {
+        file = new File("C:/Users/Fiona/the-one-latest/the-one/reports/MetadataSize.txt");
+    }
 
     public Router10(ActiveRouter r)
     {
