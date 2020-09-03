@@ -3,9 +3,6 @@ package routing;
 
 import java.util.List;
 import java.util.Map;
-
-import com.sun.xml.internal.ws.util.StringUtils;
-
 import core.Connection;
 import core.DTNHost;
 
@@ -52,7 +49,7 @@ public class ContactMD extends Metadata
         myContacts.add(contactMetrics);
     }
 
-    /* When connection is dawn 2 things should happen
+    /* When connection is down 2 things should happen
      * -set contact duration for the last element I added in the list
      * -I update average contact duration with host I met
      * Update transitive contact metadata
@@ -82,7 +79,7 @@ public class ContactMD extends Metadata
         MessageRouter thisRouter = thisHost.getRouter();
         List<ContactMetrics> myContacts = ((Router10)thisRouter).getContactMetrics();
         Map<String, ContactHistory> myContactMetadata = ((Router10)thisRouter).getContactMetadata();
-        int totalNoOfEncounters = myContacts.size();
+        int totalNoOfEncounters = myContacts.size(); //maybe use for some frequency later
         int counter = 0;
         double sum = 0.0;
         double averageContactDuration = 0.0;
@@ -127,8 +124,7 @@ public class ContactMD extends Metadata
             ContactHistory contactDetails1 = e.getValue();
             String firstHost = contactDescription.substring(0, contactDescription.indexOf(" had contact with"));
             String secondHost = contactDescription.substring(contactDescription.indexOf(" had contact with")+ " had contact with".length(), contactDescription.indexOf(". "));
-            String reversedContactDescription = firstHost + " had contact with" + secondHost + ". ";
-            System.out.println(reversedContactDescription);
+            String reversedContactDescription = secondHost + " had contact with" + firstHost + ". ";
             if (contactDescription.contains(thisHost.toString())) {
                 continue; // don't add yourself
             }

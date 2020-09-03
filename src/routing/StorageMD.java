@@ -42,19 +42,20 @@ public class StorageMD extends Metadata
                    // updateMetadataSize();
                 }
             }else {
-                StorageMetrics sm = new StorageMetrics(otherHost, time);
-                myStorageMetadata.put(otherHost.toString(), sm); 
+                  StorageMetrics sm = new StorageMetrics(otherHost, time);
+                  myStorageMetadata.put(otherHost.toString(), sm); 
                 //updateMetadataSize();
             }
-        }
+        }else {
         StorageMetrics sm = new StorageMetrics(otherHost, time);
         myStorageMetadata.put(otherHost.toString(), sm); 
         //updateMetadataSize();
+        }
 
     }
     
     /* Update transitive storage metadata
-       For each storage metadata other host has check if I already have this info 
+       For each storage metadata other host has, check if I already have this info 
        and if I have it check last encounter time 
     */
     

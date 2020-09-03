@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 //import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -23,7 +24,9 @@ import core.MessageListener;
 import core.ModuleCommunicationBus;
 import core.NetworkInterface;
 import core.SimClock;
+import routing.ActiveRouter;
 import routing.ContactHistory;
+import routing.MessageRouter;
 import routing.PassiveRouter;
 import routing.Router10;
 import routing.StorageMetrics;
@@ -77,7 +80,7 @@ import routing.MetadataInfo;
 			li.add(ni);
 
 			ModuleCommunicationBus comBus = new ModuleCommunicationBus();
-			h[i] = new DTNHost(ml,null,"h",li,comBus, new StationaryMovement(new Coord(0,0)), new PassiveRouter(testSettings));
+			h[i] = new DTNHost(ml,null,"h",li,comBus, new StationaryMovement(new Coord(0,0)), new Router10(testSettings));
 			m[i] = new Message(h[0], h[i],""+i, size[i]);
 		}
 
@@ -87,9 +90,9 @@ import routing.MetadataInfo;
 		con(h[2], h[4]);
 		con(h[3], h[4]);
 
-		//c[0].startTransfer(h[0], m[0]);
-		//c[1].startTransfer(h[0], m[1]);
-		//c[2].startTransfer(h[1], m[2]);
+//		c[0].startTransfer(h[0], m[0]);
+//		c[1].startTransfer(h[0], m[1]);
+//		c[2].startTransfer(h[1], m[2]);
 		conCount = 3;
 	}
 
@@ -122,14 +125,18 @@ import routing.MetadataInfo;
 		MetadataInfo md = new MetadataInfo(h[1]);
 		assertEquals(md.getContact().get_last_start(), 0.0, 0.001);
 		Router10 thisRouter =(Router10)h[0].getRouter();
+		Router10 otherRouter =(Router10)h[1].getRouter();
 		assertEquals(thisRouter.getContactMetrics().size(), 0);
 		assertEquals(thisRouter.getStorageMetadata().size(), 0);
 		// c[0] is a connection between h[0] and h[1], connection up should set the starting time to 10.0;
 		md.connUp(c[0], h[0], SimClock.getTime());
+		md.connUp(c[0], h[1], SimClock.getTime());
 		//assertEquals(md.getContact().get_last_start(), 10.0); // 
 		assertEquals(md.getContact().get_last_start(), 10.0, 0.001);
 		assertEquals(thisRouter.getContactMetrics().size(), 1);
+		assertEquals(otherRouter.getContactMetrics().size(), 1);
 		assertEquals(thisRouter.getStorageMetadata().size(), 1);
+		assertEquals(otherRouter.getStorageMetadata().size(), 1);
 	}
 
 	/*
@@ -143,6 +150,7 @@ import routing.MetadataInfo;
 	    MetadataInfo md = new MetadataInfo(h[1]);   
 	    Router10 thisRouter = (Router10)h[0].getRouter();
 	    assertEquals(thisRouter.getContactMetadata().size(), 0);
+	    md.connUp(c[0], h[0], SimClock.getTime());
 	    md.connDown(c[0], h[0], SimClock.getTime());
 	    assertEquals(thisRouter.getContactMetadata().size(), 1);
 	   
@@ -171,17 +179,20 @@ import routing.MetadataInfo;
 	@Test
 	public void testBufferSizeTransitive() {
 	    MetadataInfo md = new MetadataInfo(h[2]); 
-	    Router10 thisRouter = (Router10)h[1].getRouter();
+	    Router10 thisRouter = (Router10)h[0].getRouter();
 	    Router10 otherRouter = (Router10)h[2].getRouter();
+	    md.connUp(c[0], h[0], SimClock.getTime());
+	    md.connUp(c[0], h[1], SimClock.getTime());
 	    Map<String, StorageMetrics> storageMetadata1 = thisRouter.getStorageMetadata();
 	    Map<String, StorageMetrics> storageMetadata2 = otherRouter.getStorageMetadata();
 	    assertEquals(storageMetadata1.size(), 1);
 	    assertEquals(storageMetadata2.size(), 0);
+	    md.connUp(c[1], h[0], SimClock.getTime());
 	    md.connUp(c[1], h[2], SimClock.getTime());
 	    StorageMetrics sm1 = storageMetadata1.get(storageMetadata1.keySet().toArray()[0]);
-	    StorageMetrics sm2 = storageMetadata2.get(storageMetadata2.keySet().toArray()[0]);
+	    StorageMetrics sm2 = storageMetadata2.get(storageMetadata2.keySet().toArray()[1]);
 	    assertEquals(storageMetadata1.size(), 2);
-	    assertEquals(storageMetadata2, 1);
+	    assertEquals(storageMetadata2.size(), 2);
 	    assertEquals(sm1.getBufferSize(), sm2.getBufferSize());
 	}
 	
@@ -198,18 +209,25 @@ import routing.MetadataInfo;
 	public void testContactTransitive() {
 	    
 	    MetadataInfo md = new MetadataInfo(h[2]); 
-        Router10 thisRouter = (Router10)h[1].getRouter();
+        Router10 thisRouter = (Router10)h[0].getRouter();
         Router10 otherRouter = (Router10)h[2].getRouter();
-        Map<String, ContactHistory> contactMetadata1 = thisRouter.getContactMetadata();
-        Map<String, ContactHistory> contactMetadata2 = otherRouter.getContactMetadata();
+        Map<String, ContactHistory> contactMetadata1; 
+        Map<String, ContactHistory> contactMetadata2; 
+        md.connUp(c[0], h[0], SimClock.getTime());
+        md.connDown(c[0], h[0], SimClock.getTime());
+        contactMetadata1 = thisRouter.getContactMetadata();
+        contactMetadata2 = otherRouter.getContactMetadata();
         assertEquals(contactMetadata1.size(), 1);
         assertEquals(contactMetadata2.size(), 0);
+        md.connUp(c[1], h[0], SimClock.getTime());
         md.connUp(c[1], h[2], SimClock.getTime());
-        String contactDescription1 = contactMetadata1.keySet().stream().findFirst().get();
-        String contactDescription2 = contactMetadata2.keySet().stream().findFirst().get();
+        md.connDown(c[1], h[0], SimClock.getTime());
+        md.connDown(c[1], h[2], SimClock.getTime());
+        contactMetadata1 = thisRouter.getContactMetadata();
+        contactMetadata2 = otherRouter.getContactMetadata();
         assertEquals(contactMetadata1.size(), 2);
-        assertEquals(contactMetadata2, 1);
-        assertEquals(contactDescription1, contactDescription2);
+        assertEquals(contactMetadata2.size(), 2);
+       
 	}
 	
 	/*
