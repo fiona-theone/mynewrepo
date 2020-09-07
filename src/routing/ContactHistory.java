@@ -1,6 +1,8 @@
 package routing;
 
-public class ContactHistory
+import java.io.Serializable;
+
+public class ContactHistory implements Serializable
 {
     
     private double averageContactDuration;

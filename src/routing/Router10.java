@@ -1,6 +1,9 @@
 package routing;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -18,11 +21,15 @@ public class Router10 extends ActiveRouter
     private List<ContactMetrics> cm;
     private Map<String, StorageMetrics> storageMetadata;
     private Map<String, ContactHistory> contactMetadata;
-    public static File file;
+    public static Map<String, Integer> storageMetadataSizeOfAllHosts;
     static {
-        file = new File("C:/Users/Fiona/the-one-latest/the-one/reports/MetadataSize.txt");
-    }
-
+        storageMetadataSizeOfAllHosts = new HashMap<String, Integer>();
+        }
+    public static Map<String, Integer> contactMetadataSizeOfAllHosts;
+    static {
+        contactMetadataSizeOfAllHosts = new HashMap<String, Integer>();
+        }
+ 
     public Router10(ActiveRouter r)
     {
         super(r);
@@ -53,8 +60,6 @@ public class Router10 extends ActiveRouter
         MetadataInfo metadataInfo = new MetadataInfo(otherHost);
         if (con.isUp()) {
             metadataInfo.connUp(con , getHost(), SimClock.getTime()); 
-            /*this.storageMetadata = StorageMD.storageMetadata;
-            this.contactMetadata = ContactMD.contactMetadata;*/
         }else {
             metadataInfo.connDown(con, getHost(), SimClock.getTime()); 
         }
@@ -105,4 +110,16 @@ public class Router10 extends ActiveRouter
         Router10 r = new Router10(this);
         return r;
       }
+       
+       public static void calculateTotalMetadataSize() {
+      
+           int totalSum =0;
+           for(Map.Entry<String, Integer> e : storageMetadataSizeOfAllHosts.entrySet()){
+               totalSum += e.getValue();
+               }
+           for(Map.Entry<String, Integer> e : contactMetadataSizeOfAllHosts.entrySet()){
+               totalSum += e.getValue();
+               }
+           System.out.println(totalSum);
+       }
 }

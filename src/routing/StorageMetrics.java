@@ -1,18 +1,19 @@
 package routing;
 
+import java.io.Serializable;
 import java.util.Map;
 
 import core.DTNHost;
 import util.Tuple;
 
-public class StorageMetrics
+public class StorageMetrics implements Serializable
 {
    private long bufferSize;
    private double bufferOccupancy;
    private double lastEncTime;
    
    
-    public StorageMetrics(DTNHost h, Double time)
+    public StorageMetrics(DTNHost h, Double time) 
     {
          super();
         // TODO Auto-generated constructor stub

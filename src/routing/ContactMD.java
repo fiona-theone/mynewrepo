@@ -1,13 +1,16 @@
 package routing;
 
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.List;
 import java.util.Map;
 import core.Connection;
 import core.DTNHost;
 
 
-public class ContactMD extends Metadata
+public class ContactMD extends Metadata 
 {
     /* public static List<ContactMetrics> cm;
     static {
@@ -98,7 +101,6 @@ public class ContactMD extends Metadata
             
             ContactHistory contactHistory = new ContactHistory(averageContactDuration, lastEncTime, counter);
             myContactMetadata.put(thisHost.toString() + " had contact with" + otherHost.toString() + ". ", contactHistory);
- 
     }
     
     /* 
@@ -159,10 +161,23 @@ public class ContactMD extends Metadata
             }
          
         }   
-        
+        Router10.contactMetadataSizeOfAllHosts.put(thisHost.toString(), size(myContactMetadata));
+        Router10.calculateTotalMetadataSize();
     }
     
     public double get_last_start() {
         return this.last_conn_start;
+    }
+    
+    public int size(Map<String, ContactHistory> map) {
+        ByteArrayOutputStream baos=new ByteArrayOutputStream();
+        try{
+            ObjectOutputStream oos=new ObjectOutputStream(baos);
+            oos.writeObject(map);
+            oos.close();
+        }catch(IOException e){
+            e.printStackTrace();
+        }
+        return baos.size();
     }
 }

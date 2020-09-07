@@ -1,13 +1,13 @@
 package routing;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.*;
 import core.DTNHost;
 import core.Connection;
 
-public class StorageMD extends Metadata
+public class StorageMD extends Metadata 
 {
     /* public static Map<String, StorageMetrics> storageMetadata;
     static {
@@ -39,17 +39,14 @@ public class StorageMD extends Metadata
                 if(myStorageMetadata.get(otherHost.toString()).getLastEncTime() < time) {
                     StorageMetrics sm = new StorageMetrics(otherHost, time);
                     myStorageMetadata.put(otherHost.toString(), sm); 
-                   // updateMetadataSize();
                 }
             }else {
                   StorageMetrics sm = new StorageMetrics(otherHost, time);
                   myStorageMetadata.put(otherHost.toString(), sm); 
-                //updateMetadataSize();
             }
         }else {
         StorageMetrics sm = new StorageMetrics(otherHost, time);
         myStorageMetadata.put(otherHost.toString(), sm); 
-        //updateMetadataSize();
         }
 
     }
@@ -74,40 +71,16 @@ public class StorageMD extends Metadata
             if(storageMetrics != null) {
                 if(storageMetrics.getLastEncTime() < entry.getValue().getLastEncTime()) {
                     myStorageMetadata.put(entry.getKey(), entry.getValue());
-                    //updateMetadataSize();
                 }
             }else {
                 myStorageMetadata.put(entry.getKey(), entry.getValue()); 
-                //updateMetadataSize();
             }
             
         }
+        Router10.storageMetadataSizeOfAllHosts.put(thisHost.toString(), size(myStorageMetadata));
+        Router10.calculateTotalMetadataSize();
     }
     
-    /* Write to file every time an update happens
- */
-    
-   public void updateMetadataSize(String data, int noOfLines) {
-       FileWriter fr = null;
-       BufferedWriter br = null;
-       String dataWithNewLine=data+System.getProperty("line.separator");
-       try{
-           fr = new FileWriter(Router10.file);
-           br = new BufferedWriter(fr);
-           for(int i = noOfLines; i>0; i--){
-               br.write(dataWithNewLine);
-           }
-       } catch (IOException e) {
-           e.printStackTrace();
-       }finally{
-           try {
-               br.close();
-               fr.close();
-           } catch (IOException e) {
-               e.printStackTrace();
-           }
-       }
-   }
 
     @Override
     public void connDown(Connection con, DTNHost otherHost, double time) {
@@ -115,5 +88,16 @@ public class StorageMD extends Metadata
         
     }
     
+    public int size(Map<String, StorageMetrics> map) {
+        ByteArrayOutputStream baos=new ByteArrayOutputStream();
+        try{
+            ObjectOutputStream oos=new ObjectOutputStream(baos);
+            oos.writeObject(map);
+            oos.close();
+        }catch(IOException e){
+            e.printStackTrace();
+        }
+        return baos.size();
+    }
 
 }
