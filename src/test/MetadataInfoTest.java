@@ -26,6 +26,7 @@ import core.NetworkInterface;
 import core.SimClock;
 import routing.ActiveRouter;
 import routing.ContactHistory;
+import routing.ContactMetrics;
 import routing.MessageRouter;
 import routing.PassiveRouter;
 import routing.Router10;
@@ -138,6 +139,22 @@ import routing.MetadataInfo;
 		assertEquals(thisRouter.getStorageMetadata().size(), 1);
 		assertEquals(otherRouter.getStorageMetadata().size(), 1);
 	}
+    
+    /*
+     * Verify:
+     * - The last element in the list is the element I am setting contact duration to
+     */
+    @Test
+    public void testContactDuration() {
+        MetadataInfo md = new MetadataInfo(h[1]);   
+        Router10 thisRouter = (Router10)h[0].getRouter();
+        List<ContactMetrics> myContacts = ((Router10)thisRouter).getContactMetrics();
+        assertEquals(myContacts.size(), 0);
+        md.connUp(c[0], h[0], SimClock.getTime());
+        md.connDown(c[0], h[0], SimClock.getTime());
+        assertEquals(myContacts.get(myContacts.size() - 1).getHostName(), h[1].toString());
+       
+    }
 
 	/*
 	 * Verify:
