@@ -151,7 +151,8 @@ import routing.MetadataInfo;
         List<ContactMetrics> myContacts = ((Router10)thisRouter).getContactMetrics();
         assertEquals(myContacts.size(), 0);
         md.connUp(c[0], h[0], SimClock.getTime());
-        md.connDown(c[0], h[0], SimClock.getTime());
+        MetadataInfo md1 = new MetadataInfo(h[1]);
+        md1.connDown(c[0], h[0], SimClock.getTime());
         assertEquals(myContacts.get(myContacts.size() - 1).getHostName(), h[1].toString());
        
     }
