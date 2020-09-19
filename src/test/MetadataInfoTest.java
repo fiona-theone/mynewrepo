@@ -2,9 +2,15 @@ package test;
 
 import static org.junit.Assert.*;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.lang.instrument.Instrumentation;
+
 //import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -142,10 +148,10 @@ import routing.MetadataInfo;
     
     /*
      * Verify:
-     * - The last element in the list is the element I am setting contact duration to
+     * -The last element of the list I get is the last host I had contact with
      */
     @Test
-    public void testContactDuration() {
+    public void testGettingLastElementOfList() {
         MetadataInfo md = new MetadataInfo(h[1]);   
         Router10 thisRouter = (Router10)h[0].getRouter();
         List<ContactMetrics> myContacts = ((Router10)thisRouter).getContactMetrics();
@@ -154,6 +160,74 @@ import routing.MetadataInfo;
         MetadataInfo md1 = new MetadataInfo(h[1]);
         md1.connDown(c[0], h[0], SimClock.getTime());
         assertEquals(myContacts.get(myContacts.size() - 1).getHostName(), h[1].toString());
+       
+    }
+    
+    /*
+     * Verify that:
+     * -Size of object is calculated OK
+     */
+    @Test
+    public void testCalculatingSizeOfObject() {
+        int[] intArray1 = {1,2};
+        int[] intArray2 = new int[120];
+        for(int i=0;i<120;i++) {
+            intArray2[i] = i;
+        }
+        //assertEquals(sizeOfBytesForObject(intArray1), 24);
+        assertEquals(sizeOfBytesForObject(intArray2), 496 );
+       
+    }
+    
+    public int sizeOfBytes(Map map) {
+        ByteArrayOutputStream baos=new ByteArrayOutputStream();
+        try{
+            ObjectOutputStream oos=new ObjectOutputStream(baos);
+            oos.writeObject(map);
+            oos.close();
+        }catch(IOException e){
+            e.printStackTrace();
+        }
+        return baos.size();
+    }
+    
+    
+    public int sizeOfBytesForObject(Object o) {
+        ByteArrayOutputStream baos=new ByteArrayOutputStream();
+        try{
+            ObjectOutputStream oos=new ObjectOutputStream(baos);
+            oos.writeObject(o);
+            oos.close();
+        }catch(IOException e){
+            e.printStackTrace();
+        }
+        return baos.size();
+    }
+    
+    /*
+     * Verify:
+     * -The contact duration is set properly to the right contact
+     * h[0] connects to h[1]
+     * h[0] connects to h[2]
+     * h[0] disconnects from h[1]
+     * h[0] disconnects from h[2]
+     * Contact duration of h[0]<->h[1] should be different from contact duration of h[0]<->h[2]
+     */
+    @Test
+    public void testSettingContactDuration() {
+        MetadataInfo md1 = new MetadataInfo(h[1]);
+        MetadataInfo md2 = new MetadataInfo(h[2]);
+        Router10 thisRouter = (Router10)h[0].getRouter();
+        List<ContactMetrics> myContacts = ((Router10)thisRouter).getContactMetrics();
+        md1.connUp(c[0], h[0], SimClock.getTime());     
+        md2.connUp(c[1], h[0], SimClock.getTime());
+        MetadataInfo md3 = new MetadataInfo(h[1]);
+        MetadataInfo md4 = new MetadataInfo(h[2]);  
+        md3.connDown(c[0], h[0], SimClock.getTime());
+        md4.connDown(c[1], h[0], SimClock.getTime());
+        assertTrue(myContacts.get(0).getHostName().equals(h[1].toString()));  
+        assertTrue(myContacts.get(1).getHostName().equals(h[2].toString()));  
+        assertTrue(myContacts.get(0).getContactDuration() != myContacts.get(1).getContactDuration());  
        
     }
 

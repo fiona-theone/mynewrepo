@@ -5,34 +5,70 @@ import util.Tuple;
 
 public class ContactMetrics
 { 
-    private Tuple<String,String> hostName;
-    private Tuple<String,Double> contactDuration;
-    private Tuple<String,Double> startEncTime;
+    private DTNHost host;
+    private String hostName;
+    private Double contactDuration;
+    private Double startEncTime;
     
     
     public ContactMetrics(DTNHost h, Double time)
     {
          super();
         // TODO Auto-generated constructor stub
-         hostName = new Tuple<String, String>("HostName",h.toString());
-         startEncTime = new Tuple<String, Double>("StartEncounterTime",time);
-    
+         setHost(h);
+         setHostName(h.toString());
+         setStartEncTime(time);  
+         setContactDuration(0.0);
     }
     
-    public String getHostName() {
-        return hostName.getValue();
-    }
-    
-    public double getStartEncTime() {
-        return startEncTime.getValue();
+
+    public void setHost(DTNHost host)
+    {
+        this.host = host;
     }
 
-    public void setContactDuration(DTNHost h, DTNHost neighbour, Double endContactTime) {
-        contactDuration = new Tuple<String, Double>("ContactDuration of "+h.toString()+ "with"+ neighbour.toString() +"is:",endContactTime-getStartEncTime());
+    public void setHostName(String hostName)
+    {
+        this.hostName = hostName;
+    }
+
+    public void setContactDuration(Double endContactTime)
+    {
+        this.contactDuration = endContactTime-getStartEncTime();
+    }
+
+    public void setStartEncTime(Double startEncTime)
+    {
+        this.startEncTime = startEncTime;
     }
     
-    public double getContactDuration() {
-        return contactDuration.getValue();
+
+
+    public DTNHost getHost()
+    {
+        return host;
     }
+
+
+
+    public String getHostName()
+    {
+        return hostName;
+    }
+
+
+
+    public Double getContactDuration()
+    {
+        return contactDuration;
+    }
+
+
+
+    public Double getStartEncTime()
+    {
+        return startEncTime;
+    }
+
     
 }

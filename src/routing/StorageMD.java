@@ -25,6 +25,11 @@ public class StorageMD extends Metadata
         DTNHost otherHost = con.getOtherNode(thisHost);;
         updateStorageMetricsFor(thisHost, otherHost,time);
         updateTransitiveStorageMetrics(otherHost, thisHost, time);  
+        MessageRouter thisRouter = thisHost.getRouter();
+        Map<String, StorageMetrics> myStorageMetadata =
+                ((Router10)thisRouter).getStorageMetadata(); 
+        ((Router10)thisRouter).setStorageMetadataSizeForThisHost(sizeOfBytes(myStorageMetadata)); 
+        ((Router10)thisRouter).storeTotalMetadataSizeForThisHost();
     }
     
     /* Update storage metadata for host we just met.
@@ -77,8 +82,6 @@ public class StorageMD extends Metadata
             }
             
         }
-        Router10.storageMetadataSizeOfAllHosts.put(thisHost.toString(), size(myStorageMetadata));
-        Router10.calculateTotalMetadataSize();
     }
     
 
@@ -88,7 +91,7 @@ public class StorageMD extends Metadata
         
     }
     
-    public int size(Map<String, StorageMetrics> map) {
+    public int sizeOfBytes(Map<String, StorageMetrics> map) {
         ByteArrayOutputStream baos=new ByteArrayOutputStream();
         try{
             ObjectOutputStream oos=new ObjectOutputStream(baos);

@@ -65,10 +65,17 @@ public class ContactMD extends Metadata
         DTNHost otherHost = con.getOtherNode(thisHost);
         MessageRouter thisRouter = thisHost.getRouter();
         List<ContactMetrics> myContacts = ((Router10)thisRouter).getContactMetrics();
-        ContactMetrics lastContactedHost = myContacts.get(myContacts.size() - 1);
-        lastContactedHost.setContactDuration(thisHost, otherHost, time);
-        updateAverageContactDuration(thisHost, otherHost, lastContactedHost.getStartEncTime());
+        for(ContactMetrics contactMetrics : myContacts) {
+            if(contactMetrics.getHostName() == otherHost.toString() && con.getOtherNode(contactMetrics.getHost()) == thisHost) {
+                contactMetrics.setContactDuration(time);
+                updateAverageContactDuration(thisHost, otherHost, contactMetrics.getStartEncTime());   
+            }
+        }
         updateTransitiveContactMetrics(otherHost, thisHost, time);
+        Map<String, ContactHistory> myContactMetadata =
+                ((Router10)thisRouter).getContactMetadata(); 
+        ((Router10)thisRouter).setContactMetadataSizeForThisHost(sizeOfBytes(myContactMetadata)); 
+        ((Router10)thisRouter).storeTotalMetadataSizeForThisHost();
        
     }
     
@@ -88,10 +95,12 @@ public class ContactMD extends Metadata
         double averageContactDuration = 0.0;
         for(ContactMetrics contactMetrics : myContacts)
         {
-            if(contactMetrics.getHostName() == otherHost.toString())
+            if(contactMetrics.getHostName() == otherHost.toString() && contactMetrics != null)
             {
                 counter++;
-                sum += contactMetrics.getContactDuration();
+                sum += contactMetrics.getContactDuration(); 
+              
+               
             }
         }
             if(counter != 0)
@@ -161,15 +170,13 @@ public class ContactMD extends Metadata
             }
          
         }   
-        Router10.contactMetadataSizeOfAllHosts.put(thisHost.toString(), size(myContactMetadata));
-        Router10.calculateTotalMetadataSize();
     }
     
     public double get_last_start() {
         return this.last_conn_start;
     }
     
-    public int size(Map<String, ContactHistory> map) {
+    public int sizeOfBytes(Map<String, ContactHistory> map) {
         ByteArrayOutputStream baos=new ByteArrayOutputStream();
         try{
             ObjectOutputStream oos=new ObjectOutputStream(baos);

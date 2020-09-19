@@ -21,15 +21,10 @@ public class Router10 extends ActiveRouter
     private List<ContactMetrics> cm;
     private Map<String, StorageMetrics> storageMetadata;
     private Map<String, ContactHistory> contactMetadata;
-    public static Map<String, Integer> storageMetadataSizeOfAllHosts;
-    static {
-        storageMetadataSizeOfAllHosts = new HashMap<String, Integer>();
-        }
-    public static Map<String, Integer> contactMetadataSizeOfAllHosts;
-    static {
-        contactMetadataSizeOfAllHosts = new HashMap<String, Integer>();
-        }
- 
+    private int storageMetadataSizeForThisHost;
+    private int contactMetadataSizeForThisHost;
+  
+    
     public Router10(ActiveRouter r)
     {
         super(r);
@@ -52,6 +47,8 @@ public class Router10 extends ActiveRouter
         this.cm = new ArrayList<ContactMetrics>();
         this.storageMetadata = new HashMap<String, StorageMetrics>();
         this.contactMetadata = new HashMap<String, ContactHistory>();
+        this.storageMetadataSizeForThisHost = 0;
+        this.storageMetadataSizeForThisHost = 0;
     }
     
     @Override
@@ -77,6 +74,28 @@ public class Router10 extends ActiveRouter
         return this.contactMetadata;
     }
     
+   
+    
+    public int getStorageMetadataSizeForThisHost()
+    {
+        return storageMetadataSizeForThisHost;
+    }
+
+    public void setStorageMetadataSizeForThisHost(int storageMetadataSizeForThisHost)
+    {
+        this.storageMetadataSizeForThisHost = storageMetadataSizeForThisHost;
+    }
+
+    public int getContactMetadataSizeForThisHost()
+    {
+        return contactMetadataSizeForThisHost;
+    }
+
+    public void setContactMetadataSizeForThisHost(int contactMetadataSizeForThisHost)
+    {
+        this.contactMetadataSizeForThisHost = contactMetadataSizeForThisHost;
+    }
+
     @Override
     public RoutingInfo getRoutingInfo() {
     RoutingInfo top = super.getRoutingInfo();
@@ -111,15 +130,12 @@ public class Router10 extends ActiveRouter
         return r;
       }
        
-       public static void calculateTotalMetadataSize() {
+       public void storeTotalMetadataSizeForThisHost() {
       
-           int totalSum =0;
-           for(Map.Entry<String, Integer> e : storageMetadataSizeOfAllHosts.entrySet()){
-               totalSum += e.getValue();
-               }
-           for(Map.Entry<String, Integer> e : contactMetadataSizeOfAllHosts.entrySet()){
-               totalSum += e.getValue();
-               }
-           System.out.println(totalSum);
+           int totalSumForThisHost =0;
+           totalSumForThisHost += getStorageMetadataSizeForThisHost();
+           totalSumForThisHost += getStorageMetadataSizeForThisHost();
+           MetadataSize.metadataSizeOfAllHosts.put(getHost().toString(), totalSumForThisHost);
+           MetadataSize.calculateTotalMetadataSize();
        }
 }
