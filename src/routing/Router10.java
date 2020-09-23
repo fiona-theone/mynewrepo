@@ -23,6 +23,8 @@ public class Router10 extends ActiveRouter
     private Map<String, ContactHistory> contactMetadata;
     private int storageMetadataSizeForThisHost;
     private int contactMetadataSizeForThisHost;
+    private List<Integer> storageMetadataSizeExchangedForThisHost;
+    private List<Integer> contactMetadataSizeExchangedForThisHost;
   
     
     public Router10(ActiveRouter r)
@@ -49,6 +51,8 @@ public class Router10 extends ActiveRouter
         this.contactMetadata = new HashMap<String, ContactHistory>();
         this.storageMetadataSizeForThisHost = 0;
         this.storageMetadataSizeForThisHost = 0;
+        this.storageMetadataSizeExchangedForThisHost = new ArrayList<Integer>();
+        this.contactMetadataSizeExchangedForThisHost = new ArrayList<Integer>();
     }
     
     @Override
@@ -56,13 +60,15 @@ public class Router10 extends ActiveRouter
         DTNHost otherHost = con.getOtherNode(getHost());;
         MetadataInfo metadataInfo = new MetadataInfo(otherHost);
         if (con.isUp()) {
+            System.out.println(SimClock.getTime());
             metadataInfo.connUp(con , getHost(), SimClock.getTime()); 
         }else {
+            System.out.println(SimClock.getTime());
             metadataInfo.connDown(con, getHost(), SimClock.getTime()); 
         }
     }
     
-    public List<ContactMetrics> getContactMetrics() {
+    public List<ContactMetrics> getListOfAllContactMetrics() {
         return this.cm;
     }
     
@@ -94,6 +100,16 @@ public class Router10 extends ActiveRouter
     public void setContactMetadataSizeForThisHost(int contactMetadataSizeForThisHost)
     {
         this.contactMetadataSizeForThisHost = contactMetadataSizeForThisHost;
+    }
+
+    public List<Integer> getStorageMetadataSizeExchangedForThisHost()
+    {
+        return storageMetadataSizeExchangedForThisHost;
+    }
+
+    public List<Integer> getContactMetadataSizeExchangedForThisHost()
+    {
+        return contactMetadataSizeExchangedForThisHost;
     }
 
     @Override
@@ -132,10 +148,22 @@ public class Router10 extends ActiveRouter
        
        public void storeTotalMetadataSizeForThisHost() {
       
-           int totalSumForThisHost =0;
+           int totalSumForThisHost = 0;
            totalSumForThisHost += getStorageMetadataSizeForThisHost();
            totalSumForThisHost += getStorageMetadataSizeForThisHost();
            MetadataSize.metadataSizeOfAllHosts.put(getHost().toString(), totalSumForThisHost);
            MetadataSize.calculateTotalMetadataSize();
+       }
+       
+       public void printSizeOfMetadataExchanged() {
+           int sum = 0;
+           for(Integer size : storageMetadataSizeExchangedForThisHost) {
+               sum += size;
+           }
+           for(Integer size : contactMetadataSizeExchangedForThisHost) {
+               sum += size;
+           }
+           MetadataSize.metadataSizeOfAllHostsExchanged.put(getHost().toString(), sum);
+           MetadataSize.calculateTotalMetadataSizeExchnagedAtRuntime();
        }
 }

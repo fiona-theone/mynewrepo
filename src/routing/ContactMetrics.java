@@ -18,7 +18,7 @@ public class ContactMetrics
          setHost(h);
          setHostName(h.toString());
          setStartEncTime(time);  
-         setContactDuration(0.0);
+         setContactDuration(time);
     }
     
 

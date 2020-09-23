@@ -23,11 +23,13 @@ public class ContactMD extends Metadata
 
     public ContactMetrics contactMetrics;
     private double last_conn_start;
+    private double last_conn_end;
 
     public ContactMD(DTNHost h)
     {
         super(h);
         last_conn_start = 0.0;
+        last_conn_end =0.0;
     }
 
     @Override
@@ -47,7 +49,7 @@ public class ContactMD extends Metadata
     public void updateContactMetricsFor(DTNHost otherHost, DTNHost thisHost, double time)
     {
         MessageRouter thisRouter = thisHost.getRouter();
-        List<ContactMetrics> myContacts = ((Router10)thisRouter).getContactMetrics();
+        List<ContactMetrics> myContacts = ((Router10)thisRouter).getListOfAllContactMetrics();
         contactMetrics = new ContactMetrics(otherHost, time);
         myContacts.add(contactMetrics);
     }
@@ -62,9 +64,10 @@ public class ContactMD extends Metadata
     @Override
     public void connDown(Connection con, DTNHost thisHost, double time)
     {
+        last_conn_end = time;
         DTNHost otherHost = con.getOtherNode(thisHost);
         MessageRouter thisRouter = thisHost.getRouter();
-        List<ContactMetrics> myContacts = ((Router10)thisRouter).getContactMetrics();
+        List<ContactMetrics> myContacts = ((Router10)thisRouter).getListOfAllContactMetrics();
         for(ContactMetrics contactMetrics : myContacts) {
             if(contactMetrics.getHostName() == otherHost.toString() && con.getOtherNode(contactMetrics.getHost()) == thisHost) {
                 contactMetrics.setContactDuration(time);
@@ -76,6 +79,7 @@ public class ContactMD extends Metadata
                 ((Router10)thisRouter).getContactMetadata(); 
         ((Router10)thisRouter).setContactMetadataSizeForThisHost(sizeOfBytes(myContactMetadata)); 
         ((Router10)thisRouter).storeTotalMetadataSizeForThisHost();
+        ((Router10)thisRouter).printSizeOfMetadataExchanged();
        
     }
     
@@ -87,9 +91,9 @@ public class ContactMD extends Metadata
     public void updateAverageContactDuration(DTNHost thisHost, DTNHost otherHost, double lastEncTime)
     {
         MessageRouter thisRouter = thisHost.getRouter();
-        List<ContactMetrics> myContacts = ((Router10)thisRouter).getContactMetrics();
+        List<Integer> contactMetadataSizeExchangedForThisHost = ((Router10)thisRouter).getContactMetadataSizeExchangedForThisHost();
+        List<ContactMetrics> myContacts = ((Router10)thisRouter).getListOfAllContactMetrics();
         Map<String, ContactHistory> myContactMetadata = ((Router10)thisRouter).getContactMetadata();
-        int totalNoOfEncounters = myContacts.size(); //maybe use for some frequency later
         int counter = 0;
         double sum = 0.0;
         double averageContactDuration = 0.0;
@@ -110,6 +114,7 @@ public class ContactMD extends Metadata
             
             ContactHistory contactHistory = new ContactHistory(averageContactDuration, lastEncTime, counter);
             myContactMetadata.put(thisHost.toString() + " had contact with" + otherHost.toString() + ". ", contactHistory);
+            contactMetadataSizeExchangedForThisHost.add(32);
     }
     
     /* 
@@ -124,6 +129,7 @@ public class ContactMD extends Metadata
 
     public void updateTransitiveContactMetrics(DTNHost otherHost, DTNHost thisHost, double time) {
         MessageRouter thisRouter = thisHost.getRouter();
+        List<Integer> contactMetadataSizeExchangedForThisHost = ((Router10)thisRouter).getContactMetadataSizeExchangedForThisHost();
         Map<String, ContactHistory> myContactMetadata =
                 ((Router10)thisRouter).getContactMetadata();
         MessageRouter otherRouter = otherHost.getRouter();
@@ -144,10 +150,12 @@ public class ContactMD extends Metadata
             if(contactDetails2 != null && contactDetails3== null) {
                 if(contactDetails1.getLastEncTime()>contactDetails2.getLastEncTime()) {
                     myContactMetadata.put(contactDescription, contactDetails1);
+                    contactMetadataSizeExchangedForThisHost.add(32);
                 }
             }else if(contactDetails2 == null && contactDetails3!= null) {
                 if(contactDetails1.getLastEncTime()>contactDetails3.getLastEncTime()) {
                     myContactMetadata.put(contactDescription, contactDetails1);
+                    contactMetadataSizeExchangedForThisHost.add(32);
                 }
             }else if(contactDetails2 != null && contactDetails3!= null) {
                double lastEncTime1 = contactDetails1.getLastEncTime();
@@ -157,16 +165,20 @@ public class ContactMD extends Metadata
                if (max == lastEncTime1) {
                    myContactMetadata.put(contactDescription, contactDetails1);
                    myContactMetadata.remove(reversedContactDescription);
+                   contactMetadataSizeExchangedForThisHost.add(32);
                }else if(max == lastEncTime2) {
                    myContactMetadata.put(contactDescription, contactDetails2);
                    myContactMetadata.remove(reversedContactDescription);
+                   contactMetadataSizeExchangedForThisHost.add(32);
                }else {
                    myContactMetadata.put(reversedContactDescription, contactDetails3);
                    myContactMetadata.remove(contactDescription);
+                   contactMetadataSizeExchangedForThisHost.add(32);
                }
             }
             else {
                 myContactMetadata.put(contactDescription, contactDetails1);
+                contactMetadataSizeExchangedForThisHost.add(32);
             }
          
         }   
@@ -175,12 +187,15 @@ public class ContactMD extends Metadata
     public double get_last_start() {
         return this.last_conn_start;
     }
+    public double get_last_end() {
+        return this.last_conn_end;
+    }
     
-    public int sizeOfBytes(Map<String, ContactHistory> map) {
+    public int sizeOfBytes(Object o) {
         ByteArrayOutputStream baos=new ByteArrayOutputStream();
         try{
             ObjectOutputStream oos=new ObjectOutputStream(baos);
-            oos.writeObject(map);
+            oos.writeObject(o);
             oos.close();
         }catch(IOException e){
             e.printStackTrace();

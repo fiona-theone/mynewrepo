@@ -129,19 +129,20 @@ import routing.MetadataInfo;
 	
     @Test
 	public void testConnUp() {
-		MetadataInfo md = new MetadataInfo(h[1]);
-		assertEquals(md.getContact().get_last_start(), 0.0, 0.001);
+		MetadataInfo md1 = new MetadataInfo(h[1]);
+		MetadataInfo md2 = new MetadataInfo(h[1]);
+		assertEquals(md1.getContact().get_last_start(), 0.0, 0.001);
 		Router10 thisRouter =(Router10)h[0].getRouter();
 		Router10 otherRouter =(Router10)h[1].getRouter();
-		assertEquals(thisRouter.getContactMetrics().size(), 0);
+		assertEquals(thisRouter.getListOfAllContactMetrics().size(), 0);
 		assertEquals(thisRouter.getStorageMetadata().size(), 0);
 		// c[0] is a connection between h[0] and h[1], connection up should set the starting time to 10.0;
-		md.connUp(c[0], h[0], SimClock.getTime());
-		md.connUp(c[0], h[1], SimClock.getTime());
+		md1.connUp(c[0], h[0], 60.0);
+		md2.connUp(c[0], h[1], SimClock.getTime());
 		//assertEquals(md.getContact().get_last_start(), 10.0); // 
-		assertEquals(md.getContact().get_last_start(), 10.0, 0.001);
-		assertEquals(thisRouter.getContactMetrics().size(), 1);
-		assertEquals(otherRouter.getContactMetrics().size(), 1);
+		assertEquals(md1.getContact().get_last_start(), 60.0, 0.001);
+		assertEquals(thisRouter.getListOfAllContactMetrics().size(), 1);
+		assertEquals(otherRouter.getListOfAllContactMetrics().size(), 1);
 		assertEquals(thisRouter.getStorageMetadata().size(), 1);
 		assertEquals(otherRouter.getStorageMetadata().size(), 1);
 	}
@@ -154,13 +155,33 @@ import routing.MetadataInfo;
     public void testGettingLastElementOfList() {
         MetadataInfo md = new MetadataInfo(h[1]);   
         Router10 thisRouter = (Router10)h[0].getRouter();
-        List<ContactMetrics> myContacts = ((Router10)thisRouter).getContactMetrics();
+        List<ContactMetrics> myContacts = ((Router10)thisRouter).getListOfAllContactMetrics();
         assertEquals(myContacts.size(), 0);
         md.connUp(c[0], h[0], SimClock.getTime());
         MetadataInfo md1 = new MetadataInfo(h[1]);
         md1.connDown(c[0], h[0], SimClock.getTime());
         assertEquals(myContacts.get(myContacts.size() - 1).getHostName(), h[1].toString());
        
+    }
+    
+    /*
+     * Test:
+     * -If list is garbage collected
+     */
+    @Test
+    public void testIfListIsGarbageCollected() {
+       List<String> strings = new ArrayList<>();
+       strings.add("1");
+       Map<String, List<String>> map = new HashMap<String, List<String>>();
+       map.put("strings", strings);
+       modify(map);
+       assertEquals(strings.size(),2);
+       
+    }
+    
+    private void modify(Map<String,List<String>>map) {
+        List<String>strings = map.get("strings");
+        strings.add("2");    
     }
     
     /*
@@ -214,19 +235,21 @@ import routing.MetadataInfo;
      * Contact duration of h[0]<->h[1] should be different from contact duration of h[0]<->h[2]
      */
     @Test
-    public void testSettingContactDuration() {
+    public void testThatContactDurationIsSetToTheRightContact() {
         MetadataInfo md1 = new MetadataInfo(h[1]);
         MetadataInfo md2 = new MetadataInfo(h[2]);
         Router10 thisRouter = (Router10)h[0].getRouter();
-        List<ContactMetrics> myContacts = ((Router10)thisRouter).getContactMetrics();
-        md1.connUp(c[0], h[0], SimClock.getTime());     
-        md2.connUp(c[1], h[0], SimClock.getTime());
+        List<ContactMetrics> myContacts = ((Router10)thisRouter).getListOfAllContactMetrics();
+        md1.connUp(c[0], h[0], 60.0);  
+        md2.connUp(c[1], h[0], 60.0); 
         MetadataInfo md3 = new MetadataInfo(h[1]);
         MetadataInfo md4 = new MetadataInfo(h[2]);  
-        md3.connDown(c[0], h[0], SimClock.getTime());
-        md4.connDown(c[1], h[0], SimClock.getTime());
+        md3.connDown(c[0], h[0], 70.0);
+        md4.connDown(c[1], h[0], 80.0);
         assertTrue(myContacts.get(0).getHostName().equals(h[1].toString()));  
         assertTrue(myContacts.get(1).getHostName().equals(h[2].toString()));  
+        System.out.println(myContacts.get(0).getContactDuration()+"Fiona");
+        System.out.println(myContacts.get(1).getContactDuration()+"Fiona");
         assertTrue(myContacts.get(0).getContactDuration() != myContacts.get(1).getContactDuration());  
        
     }
@@ -239,12 +262,16 @@ import routing.MetadataInfo;
 	 */
 	@Test
 	public void testConnDown() {
-	    MetadataInfo md = new MetadataInfo(h[1]);   
+	    MetadataInfo md1 = new MetadataInfo(h[1]); 
 	    Router10 thisRouter = (Router10)h[0].getRouter();
 	    assertEquals(thisRouter.getContactMetadata().size(), 0);
-	    md.connUp(c[0], h[0], SimClock.getTime());
-	    md.connDown(c[0], h[0], SimClock.getTime());
+	    md1.connUp(c[0], h[0], 60.0);
+	    MetadataInfo md2 = new MetadataInfo(h[0]);
+	    md2.connDown(c[0], h[0], 70.0);
+	    Map<String, ContactHistory> contactMetadata = thisRouter.getContactMetadata();
+        ContactHistory ch = contactMetadata.get(contactMetadata.keySet().toArray()[0]);
 	    assertEquals(thisRouter.getContactMetadata().size(), 1);
+	    assertEquals(ch.getAverageContactDuration(), 10.0, 0.001);
 	   
 	}
 	
@@ -300,23 +327,26 @@ import routing.MetadataInfo;
 	@Test
 	public void testContactTransitive() {
 	    
-	    MetadataInfo md = new MetadataInfo(h[2]); 
+	    MetadataInfo md1 = new MetadataInfo(h[1]); 
+	    MetadataInfo md2 = new MetadataInfo(h[2]); 
         Router10 thisRouter = (Router10)h[0].getRouter();
         Router10 otherRouter = (Router10)h[2].getRouter();
         Map<String, ContactHistory> contactMetadata1; 
         Map<String, ContactHistory> contactMetadata2; 
-        md.connUp(c[0], h[0], SimClock.getTime());
-        md.connDown(c[0], h[0], SimClock.getTime());
+        md1.connUp(c[0], h[0], SimClock.getTime());
+        md1.connDown(c[0], h[0], SimClock.getTime());
         contactMetadata1 = thisRouter.getContactMetadata();
         contactMetadata2 = otherRouter.getContactMetadata();
         assertEquals(contactMetadata1.size(), 1);
         assertEquals(contactMetadata2.size(), 0);
-        md.connUp(c[1], h[0], SimClock.getTime());
-        md.connUp(c[1], h[2], SimClock.getTime());
-        md.connDown(c[1], h[0], SimClock.getTime());
-        md.connDown(c[1], h[2], SimClock.getTime());
+        md2.connUp(c[1], h[0], SimClock.getTime());
+        md2.connUp(c[1], h[2], SimClock.getTime());
+        md2.connDown(c[1], h[0], SimClock.getTime());
+        md2.connDown(c[1], h[2], SimClock.getTime());
         contactMetadata1 = thisRouter.getContactMetadata();
         contactMetadata2 = otherRouter.getContactMetadata();
+        ContactHistory ch1 = contactMetadata1.get(contactMetadata1.keySet().toArray()[0]);
+        ContactHistory ch2 = contactMetadata2.get(contactMetadata2.keySet().toArray()[1]);
         assertEquals(contactMetadata1.size(), 2);
         assertEquals(contactMetadata2.size(), 2);
        

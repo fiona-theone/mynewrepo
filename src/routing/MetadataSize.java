@@ -9,6 +9,10 @@ public class MetadataSize
     static {
         metadataSizeOfAllHosts = new HashMap<String, Integer>();
         }
+    public static Map<String, Integer> metadataSizeOfAllHostsExchanged;
+    static {
+        metadataSizeOfAllHostsExchanged = new HashMap<String, Integer>();
+        }
     
     public static void calculateTotalMetadataSize() {
         int totalMetadataSizeForAllHosts = 0;
@@ -16,5 +20,12 @@ public class MetadataSize
             totalMetadataSizeForAllHosts += entry.getValue();
         }
         System.out.println("The total metadata size after the last transitive update is: " + totalMetadataSizeForAllHosts) ;
+    }
+    public static void calculateTotalMetadataSizeExchnagedAtRuntime() {
+        int totalMetadataSizeExchangedForAllHosts = 0;
+        for (Map.Entry<String, Integer> entry : metadataSizeOfAllHostsExchanged.entrySet()) {
+            totalMetadataSizeExchangedForAllHosts += entry.getValue();
+        }
+        System.out.println("The total metadata size exchanged at runtime is: " + totalMetadataSizeExchangedForAllHosts) ;
     }
 }

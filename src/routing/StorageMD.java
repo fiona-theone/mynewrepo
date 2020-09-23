@@ -30,6 +30,7 @@ public class StorageMD extends Metadata
                 ((Router10)thisRouter).getStorageMetadata(); 
         ((Router10)thisRouter).setStorageMetadataSizeForThisHost(sizeOfBytes(myStorageMetadata)); 
         ((Router10)thisRouter).storeTotalMetadataSizeForThisHost();
+        ((Router10)thisRouter).printSizeOfMetadataExchanged();
     }
     
     /* Update storage metadata for host we just met.
@@ -39,19 +40,26 @@ public class StorageMD extends Metadata
         MessageRouter thisRouter = thisHost.getRouter();
         Map<String, StorageMetrics> myStorageMetadata =
                 ((Router10)thisRouter).getStorageMetadata(); 
+        List<Integer> storageMetadataSizeExchangedForThisHost = ((Router10)thisRouter).getStorageMetadataSizeExchangedForThisHost();
           if(myStorageMetadata.size() != 0) {
             if(myStorageMetadata.containsKey(otherHost.toString())) {
                 if(myStorageMetadata.get(otherHost.toString()).getLastEncTime() < time) {
                     StorageMetrics sm = new StorageMetrics(otherHost, time);
                     myStorageMetadata.put(otherHost.toString(), sm); 
+                    //storageMetadataSizeExchangedForThisHost.add(sizeOfBytes(sm));
+                    storageMetadataSizeExchangedForThisHost.add(32);
                 }
             }else {
                   StorageMetrics sm = new StorageMetrics(otherHost, time);
                   myStorageMetadata.put(otherHost.toString(), sm); 
+                  //storageMetadataSizeExchangedForThisHost.add(sizeOfBytes(sm));
+                  storageMetadataSizeExchangedForThisHost.add(32);
             }
         }else {
         StorageMetrics sm = new StorageMetrics(otherHost, time);
         myStorageMetadata.put(otherHost.toString(), sm); 
+        //storageMetadataSizeExchangedForThisHost.add(sizeOfBytes(sm));
+        storageMetadataSizeExchangedForThisHost.add(32);
         }
 
     }
@@ -63,6 +71,7 @@ public class StorageMD extends Metadata
     
     public void updateTransitiveStorageMetrics( DTNHost otherHost, DTNHost thisHost, double time ) {
         MessageRouter thisRouter = thisHost.getRouter();
+        List<Integer> storageMetadataSizeExchangedForThisHost = ((Router10)thisRouter).getStorageMetadataSizeExchangedForThisHost();
         Map<String, StorageMetrics> myStorageMetadata =
                 ((Router10)thisRouter).getStorageMetadata();
         MessageRouter otherRouter = otherHost.getRouter();
@@ -76,11 +85,13 @@ public class StorageMD extends Metadata
             if(storageMetrics != null) {
                 if(storageMetrics.getLastEncTime() < entry.getValue().getLastEncTime()) {
                     myStorageMetadata.put(entry.getKey(), entry.getValue());
+                    storageMetadataSizeExchangedForThisHost.add(32);
                 }
             }else {
-                myStorageMetadata.put(entry.getKey(), entry.getValue()); 
+                myStorageMetadata.put(entry.getKey(), entry.getValue());   
+                storageMetadataSizeExchangedForThisHost.add(32);
             }
-            
+            //storageMetadataSizeExchangedForThisHost.add(sizeOfBytes(storageMetrics));
         }
     }
     
@@ -91,11 +102,11 @@ public class StorageMD extends Metadata
         
     }
     
-    public int sizeOfBytes(Map<String, StorageMetrics> map) {
+    public int sizeOfBytes(Object o) {
         ByteArrayOutputStream baos=new ByteArrayOutputStream();
         try{
             ObjectOutputStream oos=new ObjectOutputStream(baos);
-            oos.writeObject(map);
+            oos.writeObject(o );
             oos.close();
         }catch(IOException e){
             e.printStackTrace();
